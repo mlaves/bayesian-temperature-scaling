@@ -1,0 +1,7 @@
+.DS_Store
+.idea/
+.ipynb_checkpoints/
+train_indices_cifar10.pth
+valid_indices_cifar10.pth
+train_indices_cifar100.pth
+valid_indices_cifar100.pth
