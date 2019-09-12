@@ -3,16 +3,15 @@ import torch.nn.functional as F
 from utils import nentr
 
 
-def uceloss(logits, labels, n_bins=15):
-    d = logits.device
+def uceloss(softmaxes, labels, n_bins=15):
+    d = softmaxes.device
     bin_boundaries = torch.linspace(0, 1, n_bins + 1, device=d)
     bin_lowers = bin_boundaries[:-1]
     bin_uppers = bin_boundaries[1:]
 
-    softmaxes = F.softmax(logits, dim=1)
     _, predictions = torch.max(softmaxes, 1)
     errors = predictions.ne(labels)
-    uncertainties = nentr(softmaxes, base=logits.size(1))
+    uncertainties = nentr(softmaxes, base=softmaxes.size(1))
     errors_in_bin_list = []
     avg_entropy_in_bin_list = []
 
@@ -35,16 +34,15 @@ def uceloss(logits, labels, n_bins=15):
     return uce, err_in_bin, avg_entropy_in_bin
 
 
-def eceloss(logits, labels, n_bins=15):
+def eceloss(softmaxes, labels, n_bins=15):
     """
     Modified from https://github.com/gpleiss/temperature_scaling/blob/master/temperature_scaling.py
     """
-    d = logits.device
+    d = softmaxes.device
     bin_boundaries = torch.linspace(0, 1, n_bins + 1, device=d)
     bin_lowers = bin_boundaries[:-1]
     bin_uppers = bin_boundaries[1:]
 
-    softmaxes = F.softmax(logits, dim=1)
     confidences, predictions = torch.max(softmaxes, 1)
     accuracies = predictions.eq(labels)
     accuracy_in_bin_list = []

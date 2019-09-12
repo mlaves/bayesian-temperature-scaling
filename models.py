@@ -48,7 +48,7 @@ class BayesianNet(torch.nn.Module):
             x_tmp = F.dropout(x, p=self.p, training=True)
             x_tmp = self._fc(x_tmp).unsqueeze(0)
             x_list = torch.cat([x_list, x_tmp], dim=0)
-        return x_list.mean(dim=0)
+        return x_list
 
     def forward(self, x, temp_scale=False, bayesian=False):
         if not temp_scale:
