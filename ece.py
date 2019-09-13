@@ -1,5 +1,4 @@
 import torch
-import torch.nn.functional as F
 from utils import nentr
 
 
@@ -19,10 +18,10 @@ def uceloss(softmaxes, labels, n_bins=15):
     for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
         # Calculated |confidence - accuracy| in each bin
         in_bin = uncertainties.gt(bin_lower.item()) * uncertainties.le(bin_upper.item())
-        prop_in_bin = in_bin.float().mean()
+        prop_in_bin = in_bin.float().mean()  # |Bm| / n
         if prop_in_bin.item() > 0.0:
-            errors_in_bin = errors[in_bin].float().mean()
-            avg_entropy_in_bin = uncertainties[in_bin].mean()
+            errors_in_bin = errors[in_bin].float().mean()  # err()
+            avg_entropy_in_bin = uncertainties[in_bin].mean()  # uncert()
             uce += torch.abs(avg_entropy_in_bin - errors_in_bin) * prop_in_bin
 
             errors_in_bin_list.append(errors_in_bin)
