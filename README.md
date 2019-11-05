@@ -5,7 +5,7 @@ Max-Heinrich Laves, Sontje Ihler, Karl-Philipp Kortmann, Tobias Ortmaier
 
 To appear at 4th workshop on Bayesian Deep Learning, Neural Information Processing Systems (NeurIPS)  2019.
 
-[https://arxiv.org/abs/1909.13550](https://arxiv.org/abs/1909.13550])
+[https://arxiv.org/abs/1909.13550](https://arxiv.org/abs/1909.13550)
 
 ## Abstract
 
