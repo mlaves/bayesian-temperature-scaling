@@ -16,7 +16,7 @@ def uceloss(softmaxes, labels, n_bins=15):
 
     uce = torch.zeros(1, device=d)
     for bin_lower, bin_upper in zip(bin_lowers, bin_uppers):
-        # Calculated |confidence - accuracy| in each bin
+        # Calculate |uncert - err| in each bin
         in_bin = uncertainties.gt(bin_lower.item()) * uncertainties.le(bin_upper.item())
         prop_in_bin = in_bin.float().mean()  # |Bm| / n
         if prop_in_bin.item() > 0.0:
