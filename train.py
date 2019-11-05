@@ -15,25 +15,24 @@ torch.backends.cudnn.benchmark = False
 torch.manual_seed(0)
 np.random.seed(0)
 
-device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-
-
 def train(batch_size,
           epochs,
-          train_bayesian,
           model,
           dataset,
           valid_size=5000,
-          label_smoothing=0.0):
+          label_smoothing=0.0,
+          gpu='cuda:0'):
 
-    assert model in ['resnet18', 'resnet101', 'densenet169']
+    device = torch.device(gpu if torch.cuda.is_available() else 'cpu')
+
+    assert model in ['resnet18', 'resnet101', 'densenet121', 'densenet169']
     assert dataset in ['cifar10', 'cifar100']
 
     print("batch_size =", batch_size)
     print("epochs =", epochs)
-    print("train_bayesian =", train_bayesian)
     print("model =", model)
     print("data set =", dataset)
+    print("label_smoothing =", label_smoothing)
 
     if dataset == 'cifar100':
         num_classes = 100
@@ -53,6 +52,8 @@ def train(batch_size,
                                       transform=transforms.Compose([
                                           transforms.ToTensor(),
                                           transforms.Normalize(mean=mean, std=std)]))
+        train_indices = torch.load('./train_indices_cifar100.pth')
+        valid_indices = torch.load('./valid_indices_cifar100.pth')
     elif dataset == 'cifar10':  # cifar10
         num_classes = 10
         mean = [0.4914, 0.48216, 0.44653]
@@ -71,12 +72,14 @@ def train(batch_size,
                                      transform=transforms.Compose([
                                          transforms.ToTensor(),
                                          transforms.Normalize(mean=mean, std=std)]))
+        train_indices = torch.load('./train_indices_cifar10.pth')
+        valid_indices = torch.load('./valid_indices_cifar10.pth')
 
-    indices = torch.randperm(len(train_set))
-    train_indices = indices[:len(indices) - valid_size]
-    valid_indices = indices[len(indices) - valid_size:]
-    torch.save(train_indices, './train_indices_' + dataset + '.pth')
-    torch.save(valid_indices, './valid_indices_' + dataset + '.pth')
+    # indices = torch.randperm(len(train_set))
+    # train_indices = indices[:len(indices) - valid_size]
+    # valid_indices = indices[len(indices) - valid_size:]
+    # torch.save(train_indices, './train_indices_' + dataset + '.pth')
+    # torch.save(valid_indices, './valid_indices_' + dataset + '.pth')
 
     train_loader = torch.utils.data.DataLoader(train_set, batch_size=batch_size,
                                                sampler=SubsetRandomSampler(train_indices))
@@ -106,10 +109,10 @@ def train(batch_size,
         for batch_idx, (data, target) in enumerate(tqdm(train_loader)):
             data, target = data.to(device), target.to(device)
             optimizer_net.zero_grad()
-            logits = net(data, bayesian=train_bayesian)
+            logits = net(data)
             xent = F.cross_entropy(logits, target)
             kll = kl_loss(logits)
-            loss = (1-label_smoothing)*xent + label_smoothing*kll
+            loss = xent + label_smoothing*kll
             loss.backward()
             epoch_train_loss.append(loss.item())
             epoch_train_acc.append(accuracy(logits, target))
@@ -126,7 +129,7 @@ def train(batch_size,
         with torch.no_grad():
             for batch_idx, (data, target) in enumerate(tqdm(valid_loader)):
                 data, target = data.to(device), target.to(device)
-                logits = net(data, bayesian=train_bayesian)
+                logits = net(data)
                 loss = F.cross_entropy(logits, target)
                 epoch_valid_loss.append(loss.item())
                 epoch_valid_acc.append(accuracy(logits, target))
@@ -152,8 +155,7 @@ def train(batch_size,
             is_best = True
 
         if is_best:
-            is_bayesian = '_bayesian' if train_bayesian else ''
-            filename = f"../snapshots/{model}{is_bayesian}_best.pth.tar"
+            filename = f"../snapshots/{model}_best.pth.tar"
             print("Saving best weights so far with val_loss: {:4f}".format(valid_losses[-1]))
             torch.save({
                 'epoch': e,
@@ -166,8 +168,7 @@ def train(batch_size,
             }, filename)
 
         if e == epochs-1:
-            is_bayesian = '_bayesian' if train_bayesian else ''
-            filename = f"../snapshots/{model}{is_bayesian}_{e}.pth.tar"
+            filename = f"../snapshots/{model}_{e}.pth.tar"
             print("Saving weights at epoch {:d}".format(e))
             torch.save({
                 'epoch': e,

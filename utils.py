@@ -5,7 +5,7 @@
 
 import torch
 
-__all__ = ['accuracy', 'Identity', 'kl_loss', 'nentr', 'xavier_normal_init']
+__all__ = ['accuracy', 'kl_loss', 'nentr', 'xavier_normal_init']
 
 
 def accuracy(input, target):
@@ -14,22 +14,14 @@ def accuracy(input, target):
     return acc.item()
 
 
-class Identity(torch.nn.Module):
-    def __init__(self):
-        super(Identity, self).__init__()
-
-    def forward(self, x):
-        return x
-
-
-def kl_loss(x):
-    return -torch.nn.functional.log_softmax(x, dim=1).mean()
+def kl_loss(logits):
+    return -torch.nn.functional.log_softmax(logits, dim=1).mean()
 
 
 def nentr(p, base=None):
     """
     Calculates entropy of p to the base b. If base is None, the natural logarithm is used.
-    :param p: batches of class label probability distributions
+    :param p: batches of class label probability distributions (softmax output)
     :param base: base b
     :return:
     """

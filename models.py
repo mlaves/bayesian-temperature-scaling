@@ -1,15 +1,15 @@
 import torch
 import torch.nn as nn
+from torch.nn import Identity
 import torch.nn.functional as F
 from torchvision import models
-from utils import Identity
 
 
 class BayesianNet(torch.nn.Module):
     def __init__(self, num_classes, model='resnet101', pretrained=False):
         super().__init__()
 
-        assert model in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'densenet169']
+        assert model in ['resnet18', 'resnet34', 'resnet50', 'resnet101', 'resnet152', 'densenet121', 'densenet169']
 
         if model == 'resnet18':
             self._model = models.resnet18(pretrained=pretrained)
@@ -26,9 +26,14 @@ class BayesianNet(torch.nn.Module):
         elif model == 'resnet152':
             self._model = models.resnet152(pretrained=pretrained)
             fc_in_features = 2048
-        else:  # 'densenet169'
+        elif model == 'densenet121':
+            self._model = models.densenet121(pretrained=pretrained, drop_rate=0)
+            fc_in_features = 1024
+        elif model =='densenet169':
             self._model = models.densenet169(pretrained=pretrained, drop_rate=0)
             fc_in_features = 1664
+        else:
+            assert False
 
         if 'resnet' in model:
             self._model.fc = Identity()
